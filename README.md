@@ -1,36 +1,135 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Voice Emotion Analysis App
 
-## Getting Started
+A Next.js application that records voice, analyzes emotions using Hume AI, transcribes speech with OpenAI Whisper, and provides emotional insights using Claude AI.
 
-First, run the development server:
+## Features
+
+- 🎤 **Voice Recording**: Browser-based audio recording with real-time feedback
+- 📝 **Speech Transcription**: Powered by OpenAI Whisper API
+- 😊 **Emotion Analysis**: Advanced vocal emotion detection using Hume AI
+- 🧠 **AI Insights**: Personalized emotional awareness insights from Claude 3.5 Sonnet
+- 🔔 **Real-time Feedback**: Toast notifications for each processing step
+- 📱 **Responsive Design**: Works on desktop and mobile devices
+
+## How It Works
+
+1. **Record**: Click the microphone button to start/stop voice recording
+2. **Transcribe**: Audio is sent to OpenAI Whisper for speech-to-text conversion
+3. **Analyze**: Hume AI analyzes the audio for emotional patterns and intensity
+4. **Insights**: Claude AI provides personalized insights about detected emotions
+5. **Results**: View transcript, emotion scores, and AI-generated insights
+
+## Setup Instructions
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Environment Variables
+
+Create a `.env.local` file in the root directory with your API keys:
+
+```env
+# Hume AI API Key (get from https://platform.hume.ai/settings/keys)
+HUME_API_KEY=your_hume_api_key_here
+
+# OpenAI API Key (get from https://platform.openai.com/api-keys)
+OPENAI_API_KEY=your_openai_api_key_here
+
+# OpenRouter API Key (get from https://openrouter.ai/keys)
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+```
+
+### 3. Get API Keys
+
+#### Hume AI API Key
+
+1. Visit [Hume AI Platform](https://platform.hume.ai/settings/keys)
+2. Sign up/login and create a new API key
+3. Copy the key to your `.env.local` file
+
+#### OpenAI API Key
+
+1. Visit [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Sign up/login and create a new API key
+3. Copy the key to your `.env.local` file
+
+#### OpenRouter API Key
+
+1. Visit [OpenRouter](https://openrouter.ai/keys)
+2. Sign up/login and create a new API key
+3. Copy the key to your `.env.local` file
+
+### 4. Run the Application
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Grant Microphone Permission**: Allow microphone access when prompted
+2. **Record Your Voice**: Click the blue microphone button to start recording
+3. **Stop Recording**: Click the red stop button when finished
+4. **Wait for Analysis**: The app will process your recording through three stages:
+   - Transcribing audio (OpenAI Whisper)
+   - Analyzing emotions (Hume AI)
+   - Generating insights (Claude AI)
+5. **View Results**: See your transcript, top emotions, and personalized insights
+6. **Analyze Again**: Click "Analyze Another Recording" to start over
 
-## Learn More
+## Technical Details
 
-To learn more about Next.js, take a look at the following resources:
+### Architecture
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Frontend**: Next.js 15 with React and TypeScript
+- **Styling**: Tailwind CSS
+- **Audio Recording**: Browser MediaRecorder API
+- **Notifications**: React Hot Toast
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### APIs Used
 
-## Deploy on Vercel
+- **Hume Expression Measurement API**: Vocal emotion analysis
+- **OpenAI Whisper API**: Speech-to-text transcription
+- **OpenRouter + Claude 3.5 Sonnet**: AI insights generation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Audio Processing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Records in WebM format with Opus codec
+- Optimized for speech with echo cancellation and noise suppression
+- Supports recordings up to 3 hours (Hume API limit)
+
+## Troubleshooting
+
+### Microphone Issues
+
+- Ensure microphone permissions are granted
+- Check browser compatibility (Chrome/Firefox recommended)
+- Verify microphone is not being used by other applications
+
+### API Errors
+
+- Verify all API keys are correctly set in `.env.local`
+- Check API key permissions and quotas
+- Ensure stable internet connection
+
+### Processing Timeouts
+
+- Hume API processing may take 10-30 seconds for longer recordings
+- The app will timeout after 30 seconds and show an error
+- Try shorter recordings if experiencing timeouts
+
+## Browser Compatibility
+
+- ✅ Chrome 60+
+- ✅ Firefox 55+
+- ✅ Safari 14+
+- ✅ Edge 79+
+
+## License
+
+MIT License
