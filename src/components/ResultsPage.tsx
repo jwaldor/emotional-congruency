@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useChat } from 'ai/react';
 import toast from 'react-hot-toast';
 
@@ -30,11 +30,7 @@ export default function ResultsPage({ audioBlob }: ResultsPageProps) {
     initialInput: '', // Will be set after analysis completes
   });
 
-  useEffect(() => {
-    analyzeAudio();
-  }, []);
-
-  const analyzeAudio = async () => {
+  const analyzeAudio = useCallback(async () => {
     try {
       // Step 1: Analyze emotions and get transcript from Hume
       toast.loading('Analyzing emotions and transcribing...', { id: 'analyze' });
@@ -90,11 +86,15 @@ export default function ResultsPage({ audioBlob }: ResultsPageProps) {
       setIsAnalyzing(false);
       setIsGeneratingInsights(false);
     }
-  };
+  }, [audioBlob]);
+
+  useEffect(() => {
+    analyzeAudio();
+  }, [analyzeAudio]);
 
   const generateChatPrompt = () => {
     if (!analysisData) return '';
-    
+
     const top10Emotions = analysisData.emotions.slice(0, 10)
       .map((emotion, index) => `${index + 1}. ${emotion.name} (${(emotion.score * 100).toFixed(1)}%)`)
       .join('\n');
@@ -152,24 +152,21 @@ I'd like to understand more about what these emotions might reveal about my comm
               const isTopThree = index < 3;
               return (
                 <div key={emotion.name} className="flex items-center space-x-4">
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                    isTopThree 
-                      ? 'bg-blue-100 border-2 border-blue-300' 
-                      : 'bg-gray-100'
-                  }`}>
-                    <span className={`font-semibold text-sm ${
-                      isTopThree ? 'text-blue-600' : 'text-gray-500'
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isTopThree
+                    ? 'bg-blue-100 border-2 border-blue-300'
+                    : 'bg-gray-100'
                     }`}>
+                    <span className={`font-semibold text-sm ${isTopThree ? 'text-blue-600' : 'text-gray-500'
+                      }`}>
                       {index + 1}
                     </span>
                   </div>
                   <div className="flex-grow">
                     <div className="flex justify-between items-center mb-1">
-                      <span className={`capitalize ${
-                        isTopThree 
-                          ? 'font-medium text-gray-800' 
-                          : 'font-normal text-gray-600'
-                      }`}>
+                      <span className={`capitalize ${isTopThree
+                        ? 'font-medium text-gray-800'
+                        : 'font-normal text-gray-600'
+                        }`}>
                         {emotion.name}
                         {isTopThree && (
                           <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
@@ -183,11 +180,10 @@ I'd like to understand more about what these emotions might reveal about my comm
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full transition-all duration-500 ${
-                          isTopThree 
-                            ? 'bg-gradient-to-r from-blue-400 to-blue-600' 
-                            : 'bg-gradient-to-r from-gray-300 to-gray-400'
-                        }`}
+                        className={`h-2 rounded-full transition-all duration-500 ${isTopThree
+                          ? 'bg-gradient-to-r from-blue-400 to-blue-600'
+                          : 'bg-gradient-to-r from-gray-300 to-gray-400'
+                          }`}
                         style={{ width: `${emotion.score * 100}%` }}
                       ></div>
                     </div>
@@ -235,7 +231,7 @@ I'd like to understand more about what these emotions might reveal about my comm
           <p className="text-gray-600 mb-4">
             Ask questions about your emotional analysis or explore deeper insights with AI.
           </p>
-          
+
           {/* Chat Messages */}
           <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
             {messages.map((message) => (
@@ -244,11 +240,10 @@ I'd like to understand more about what these emotions might reveal about my comm
                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                    message.role === 'user'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
+                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${message.role === 'user'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-800'
+                    }`}
                 >
                   <p className="text-sm">{message.content}</p>
                 </div>
@@ -278,7 +273,7 @@ I'd like to understand more about what these emotions might reveal about my comm
             <div className="flex justify-between items-center">
               <button
                 type="button"
-                onClick={() => handleInputChange({ target: { value: generateChatPrompt() } } as any)}
+                onClick={() => handleInputChange({ target: { value: generateChatPrompt() } } as React.ChangeEvent<HTMLTextAreaElement>)}
                 className="text-sm text-blue-600 hover:text-blue-800"
               >
                 Reset to default prompt

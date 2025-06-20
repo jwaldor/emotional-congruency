@@ -13,7 +13,6 @@ interface EmotionResultsProps {
 
 export default function EmotionResults({ transcript, emotions, insights }: EmotionResultsProps) {
   const displayEmotions = emotions.slice(0, 10); // Display top 10 emotions
-  const topThreeEmotions = emotions.slice(0, 3); // Top 3 for reference
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
@@ -43,8 +42,8 @@ export default function EmotionResults({ transcript, emotions, insights }: Emoti
             return (
               <div key={emotion.name} className="flex items-center space-x-4">
                 <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isTopThree
-                    ? 'bg-blue-100 border-2 border-blue-300'
-                    : 'bg-gray-100'
+                  ? 'bg-blue-100 border-2 border-blue-300'
+                  : 'bg-gray-100'
                   }`}>
                   <span className={`font-semibold text-sm ${isTopThree ? 'text-blue-600' : 'text-gray-500'
                     }`}>
@@ -54,8 +53,8 @@ export default function EmotionResults({ transcript, emotions, insights }: Emoti
                 <div className="flex-grow">
                   <div className="flex justify-between items-center mb-1">
                     <span className={`capitalize ${isTopThree
-                        ? 'font-medium text-gray-800'
-                        : 'font-normal text-gray-600'
+                      ? 'font-medium text-gray-800'
+                      : 'font-normal text-gray-600'
                       }`}>
                       {emotion.name}
                       {isTopThree && (
@@ -71,8 +70,8 @@ export default function EmotionResults({ transcript, emotions, insights }: Emoti
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all duration-500 ${isTopThree
-                          ? 'bg-gradient-to-r from-blue-400 to-blue-600'
-                          : 'bg-gradient-to-r from-gray-300 to-gray-400'
+                        ? 'bg-gradient-to-r from-blue-400 to-blue-600'
+                        : 'bg-gradient-to-r from-gray-300 to-gray-400'
                         }`}
                       style={{ width: `${emotion.score * 100}%` }}
                     ></div>
