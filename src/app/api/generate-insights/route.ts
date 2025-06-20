@@ -29,14 +29,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Take top 3 emotions
-    const top3Emotions = topEmotions.slice(0, 3);
+    // Take all emotions (up to 10)
+    const allEmotions = topEmotions.slice(0, 10);
 
     // Create the prompt for Claude
     const prompt = `You are an expert emotional intelligence coach analyzing the alignment between someone's speech and their detected emotions.
 
-I've analyzed someone's voice recording and detected these top emotions:
-${top3Emotions
+I've analyzed someone's voice recording and detected these emotions:
+${allEmotions
   .map(
     (emotion, index) =>
       `${index + 1}. ${emotion.name} (${(emotion.score * 100).toFixed(
@@ -48,12 +48,13 @@ ${top3Emotions
 Here's what they said:
 "${transcript}"
 
-For each of the top 3 emotions detected, evaluate:
-1. **Congruence**: How well does their speech content align with this emotion? Are they expressing what they're feeling?
-2. **Incongruence**: Where do their words contradict or mask this emotion? What are they saying vs. what they're feeling?
-3. **Blindspots**: What emotional blindspots does this incongruence reveal? What might they be unaware of about their emotional state?
+Analyze the alignment between their speech content and their detected emotions. Focus ONLY on the emotions that show clear incongruence - where their words contradict or mask what they're actually feeling.
 
-Focus on identifying patterns where their speech doesn't match their emotions, as these gaps often reveal important self-awareness opportunities. Be concise and direct in your analysis.`;
+For each incongruent emotion you identify, explain:
+1. **The Incongruence**: How do their words contradict this emotion? What are they saying vs. what they're feeling?
+2. **The Blindspot**: What self-awareness opportunity does this reveal?
+
+Only discuss emotions where there's a clear mismatch. If their speech aligns well with certain emotions, skip those entirely. Be concise and direct in your analysis.`;
 
     // Call Claude via OpenRouter
     const response = await fetch(
