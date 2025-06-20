@@ -6,17 +6,20 @@ A Next.js application that records voice, analyzes emotions and transcribes spee
 
 - 🎤 **Voice Recording**: Browser-based audio recording with real-time feedback
 - 📝 **Speech Transcription**: Built-in transcription via Hume AI
-- 😊 **Emotion Analysis**: Advanced vocal emotion detection using Hume AI
+- 😊 **Emotion Analysis**: Advanced vocal emotion detection using Hume AI (displays top 10)
 - 🧠 **AI Insights**: Personalized emotional awareness insights from Claude 3.5 Sonnet
-- 🔔 **Real-time Feedback**: Toast notifications for each processing step
+- 💬 **Interactive Chat**: Continue conversations with AI about your emotional analysis
+- ⚡ **Real-time Loading**: Immediate results page with progressive loading states
+- 🔔 **Smart Notifications**: Toast notifications for each processing step and errors
 - 📱 **Responsive Design**: Works on desktop and mobile devices
 
 ## How It Works
 
 1. **Record**: Click the microphone button to start/stop voice recording
-2. **Analyze**: Hume AI analyzes the audio for emotional patterns and transcribes speech
-3. **Insights**: Claude AI provides personalized insights about detected emotions
-4. **Results**: View transcript, emotion scores, and AI-generated insights
+2. **Immediate Results**: Navigate directly to results page with loading states
+3. **Real-time Analysis**: Watch as Hume AI analyzes emotions and transcribes speech
+4. **AI Insights**: Claude AI generates personalized insights about detected emotions
+5. **Interactive Chat**: Continue the conversation with AI using your analysis data
 
 ## Setup Instructions
 
@@ -65,11 +68,12 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 1. **Grant Microphone Permission**: Allow microphone access when prompted
 2. **Record Your Voice**: Click the blue microphone button to start recording
 3. **Stop Recording**: Click the red stop button when finished
-4. **Wait for Analysis**: The app will process your recording through two stages:
+4. **Real-time Processing**: Watch the analysis happen in real-time with loading indicators:
    - Analyzing emotions and transcribing (Hume AI)
    - Generating insights (Claude AI)
 5. **View Results**: See your transcript, top 10 emotions (with AI insights for top 3), and personalized analysis
-6. **Analyze Again**: Click "Analyze Another Recording" to start over
+6. **Chat with AI**: Use the pre-filled chat prompt to ask questions about your emotional analysis
+7. **Analyze Again**: Click "Analyze Another Recording" to start over
 
 ## Technical Details
 
