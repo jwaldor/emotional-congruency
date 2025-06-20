@@ -12,7 +12,8 @@ interface EmotionResultsProps {
 }
 
 export default function EmotionResults({ transcript, emotions, insights }: EmotionResultsProps) {
-  const topEmotions = emotions.slice(0, 3);
+  const displayEmotions = emotions.slice(0, 10); // Display top 10 emotions
+  const topThreeEmotions = emotions.slice(0, 3); // Top 3 for reference
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
@@ -31,34 +32,55 @@ export default function EmotionResults({ transcript, emotions, insights }: Emoti
       {/* Top Emotions Section */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-xl font-semibold text-gray-800 mb-4">
-          Top Detected Emotions
+          Detected Emotions
+          <span className="text-sm font-normal text-gray-500 ml-2">
+            (Top 3 analyzed by AI)
+          </span>
         </h3>
-        <div className="space-y-4">
-          {topEmotions.map((emotion, index) => (
-            <div key={emotion.name} className="flex items-center space-x-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 font-semibold text-sm">
-                  {index + 1}
-                </span>
-              </div>
-              <div className="flex-grow">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="font-medium text-gray-800 capitalize">
-                    {emotion.name}
-                  </span>
-                  <span className="text-sm text-gray-600">
-                    {(emotion.score * 100).toFixed(1)}%
+        <div className="space-y-3">
+          {displayEmotions.map((emotion, index) => {
+            const isTopThree = index < 3;
+            return (
+              <div key={emotion.name} className="flex items-center space-x-4">
+                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isTopThree
+                    ? 'bg-blue-100 border-2 border-blue-300'
+                    : 'bg-gray-100'
+                  }`}>
+                  <span className={`font-semibold text-sm ${isTopThree ? 'text-blue-600' : 'text-gray-500'
+                    }`}>
+                    {index + 1}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-gradient-to-r from-blue-400 to-blue-600 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${emotion.score * 100}%` }}
-                  ></div>
+                <div className="flex-grow">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className={`capitalize ${isTopThree
+                        ? 'font-medium text-gray-800'
+                        : 'font-normal text-gray-600'
+                      }`}>
+                      {emotion.name}
+                      {isTopThree && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
+                          AI Analyzed
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-sm text-gray-600">
+                      {(emotion.score * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all duration-500 ${isTopThree
+                          ? 'bg-gradient-to-r from-blue-400 to-blue-600'
+                          : 'bg-gradient-to-r from-gray-300 to-gray-400'
+                        }`}
+                      style={{ width: `${emotion.score * 100}%` }}
+                    ></div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

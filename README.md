@@ -1,11 +1,11 @@
 # Voice Emotion Analysis App
 
-A Next.js application that records voice, analyzes emotions using Hume AI, transcribes speech with OpenAI Whisper, and provides emotional insights using Claude AI.
+A Next.js application that records voice, analyzes emotions and transcribes speech using Hume AI, and provides emotional insights using Claude AI.
 
 ## Features
 
 - 🎤 **Voice Recording**: Browser-based audio recording with real-time feedback
-- 📝 **Speech Transcription**: Powered by OpenAI Whisper API
+- 📝 **Speech Transcription**: Built-in transcription via Hume AI
 - 😊 **Emotion Analysis**: Advanced vocal emotion detection using Hume AI
 - 🧠 **AI Insights**: Personalized emotional awareness insights from Claude 3.5 Sonnet
 - 🔔 **Real-time Feedback**: Toast notifications for each processing step
@@ -14,10 +14,9 @@ A Next.js application that records voice, analyzes emotions using Hume AI, trans
 ## How It Works
 
 1. **Record**: Click the microphone button to start/stop voice recording
-2. **Transcribe**: Audio is sent to OpenAI Whisper for speech-to-text conversion
-3. **Analyze**: Hume AI analyzes the audio for emotional patterns and intensity
-4. **Insights**: Claude AI provides personalized insights about detected emotions
-5. **Results**: View transcript, emotion scores, and AI-generated insights
+2. **Analyze**: Hume AI analyzes the audio for emotional patterns and transcribes speech
+3. **Insights**: Claude AI provides personalized insights about detected emotions
+4. **Results**: View transcript, emotion scores, and AI-generated insights
 
 ## Setup Instructions
 
@@ -35,9 +34,6 @@ Create a `.env.local` file in the root directory with your API keys:
 # Hume AI API Key (get from https://platform.hume.ai/settings/keys)
 HUME_API_KEY=your_hume_api_key_here
 
-# OpenAI API Key (get from https://platform.openai.com/api-keys)
-OPENAI_API_KEY=your_openai_api_key_here
-
 # OpenRouter API Key (get from https://openrouter.ai/keys)
 OPENROUTER_API_KEY=your_openrouter_api_key_here
 ```
@@ -47,12 +43,6 @@ OPENROUTER_API_KEY=your_openrouter_api_key_here
 #### Hume AI API Key
 
 1. Visit [Hume AI Platform](https://platform.hume.ai/settings/keys)
-2. Sign up/login and create a new API key
-3. Copy the key to your `.env.local` file
-
-#### OpenAI API Key
-
-1. Visit [OpenAI Platform](https://platform.openai.com/api-keys)
 2. Sign up/login and create a new API key
 3. Copy the key to your `.env.local` file
 
@@ -75,11 +65,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 1. **Grant Microphone Permission**: Allow microphone access when prompted
 2. **Record Your Voice**: Click the blue microphone button to start recording
 3. **Stop Recording**: Click the red stop button when finished
-4. **Wait for Analysis**: The app will process your recording through three stages:
-   - Transcribing audio (OpenAI Whisper)
-   - Analyzing emotions (Hume AI)
+4. **Wait for Analysis**: The app will process your recording through two stages:
+   - Analyzing emotions and transcribing (Hume AI)
    - Generating insights (Claude AI)
-5. **View Results**: See your transcript, top emotions, and personalized insights
+5. **View Results**: See your transcript, top 10 emotions (with AI insights for top 3), and personalized analysis
 6. **Analyze Again**: Click "Analyze Another Recording" to start over
 
 ## Technical Details
@@ -93,8 +82,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### APIs Used
 
-- **Hume Expression Measurement API**: Vocal emotion analysis
-- **OpenAI Whisper API**: Speech-to-text transcription
+- **Hume Expression Measurement API**: Vocal emotion analysis and speech transcription
 - **OpenRouter + Claude 3.5 Sonnet**: AI insights generation
 
 ### Audio Processing

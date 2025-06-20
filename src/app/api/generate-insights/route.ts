@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const top3Emotions = topEmotions.slice(0, 3);
 
     // Create the prompt for Claude
-    const prompt = `You are an expert emotional intelligence coach helping people understand the subtle ways emotions influence their thoughts and communication.
+    const prompt = `You are an expert emotional intelligence coach analyzing the alignment between someone's speech and their detected emotions.
 
 I've analyzed someone's voice recording and detected these top emotions:
 ${top3Emotions
@@ -48,13 +48,12 @@ ${top3Emotions
 Here's what they said:
 "${transcript}"
 
-For each of the top 3 emotions detected, please explain:
-1. How this emotion might be subtly manifesting in their speech patterns, word choices, or tone
-2. What this emotion could reveal about their underlying thoughts, concerns, or mental state
+For each of the top 3 emotions detected, evaluate:
+1. **Congruence**: How well does their speech content align with this emotion? Are they expressing what they're feeling?
+2. **Incongruence**: Where do their words contradict or mask this emotion? What are they saying vs. what they're feeling?
+3. **Blindspots**: What emotional blindspots does this incongruence reveal? What might they be unaware of about their emotional state?
 
-The goal is to help them recognize emotional patterns they might not be consciously aware of, so they can develop better emotional self-awareness. Be insightful but gentle, focusing on growth and understanding rather than judgment.
-
-Please structure your response with clear sections for each emotion, and keep the tone supportive and educational.`;
+Focus on identifying patterns where their speech doesn't match their emotions, as these gaps often reveal important self-awareness opportunities. Be concise and direct in your analysis.`;
 
     // Call Claude via OpenRouter
     const response = await fetch(
@@ -68,7 +67,7 @@ Please structure your response with clear sections for each emotion, and keep th
           "X-Title": "Voice Emotion Analysis App",
         },
         body: JSON.stringify({
-          model: "anthropic/claude-3.5-sonnet-20241022",
+          model: "anthropic/claude-sonnet-4",
           messages: [
             {
               role: "user",

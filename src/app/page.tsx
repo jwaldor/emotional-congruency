@@ -24,26 +24,8 @@ export default function Home() {
     setIsProcessing(true);
 
     try {
-      // Step 1: Transcribe audio
-      toast.loading('Transcribing audio...', { id: 'transcribe' });
-
-      const transcribeFormData = new FormData();
-      transcribeFormData.append('audio', audioBlob, 'recording.webm');
-
-      const transcribeResponse = await fetch('/api/transcribe', {
-        method: 'POST',
-        body: transcribeFormData,
-      });
-
-      if (!transcribeResponse.ok) {
-        throw new Error('Failed to transcribe audio');
-      }
-
-      const { transcript } = await transcribeResponse.json();
-      toast.success('Transcription complete!', { id: 'transcribe' });
-
-      // Step 2: Analyze emotions
-      toast.loading('Analyzing emotions...', { id: 'emotions' });
+      // Step 1: Analyze emotions and get transcript from Hume
+      toast.loading('Analyzing emotions and transcribing...', { id: 'analyze' });
 
       const emotionFormData = new FormData();
       emotionFormData.append('audio', audioBlob, 'recording.webm');
@@ -57,10 +39,10 @@ export default function Home() {
         throw new Error('Failed to analyze emotions');
       }
 
-      const { emotions } = await emotionResponse.json();
-      toast.success('Emotion analysis complete!', { id: 'emotions' });
+      const { emotions, transcript } = await emotionResponse.json();
+      toast.success('Analysis and transcription complete!', { id: 'analyze' });
 
-      // Step 3: Generate insights
+      // Step 2: Generate insights
       toast.loading('Generating AI insights...', { id: 'insights' });
 
       const insightResponse = await fetch('/api/generate-insights', {
