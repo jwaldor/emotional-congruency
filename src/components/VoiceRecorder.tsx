@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { AudioRecorder, formatDuration } from '@/lib/audio-utils';
+import { AnalysisSettings } from '@/types/analysis';
 import toast from 'react-hot-toast';
 
 interface VoiceRecorderProps {
-  onRecordingComplete: (audioBlob: Blob) => void;
+  onRecordingComplete: (audioBlob: Blob, settings: AnalysisSettings) => void;
   isProcessing: boolean;
 }
 
@@ -13,6 +14,11 @@ export default function VoiceRecorder({ onRecordingComplete, isProcessing }: Voi
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [settings, setSettings] = useState<AnalysisSettings>({
+    emotionThreshold: 0.0,
+    maxEmotions: 3,
+  });
 
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -74,7 +80,7 @@ export default function VoiceRecorder({ onRecordingComplete, isProcessing }: Voi
       }
 
       toast.success('Recording completed');
-      onRecordingComplete(audioBlob);
+      onRecordingComplete(audioBlob, settings);
     } catch (error) {
       toast.error('Failed to stop recording');
       console.error('Stop recording error:', error);
@@ -193,6 +199,91 @@ export default function VoiceRecorder({ onRecordingComplete, isProcessing }: Voi
           )}
         </div>
       </div>
+      {/* Advanced Settings */}
+      <div className="mb-8">
+        <div className="bg-white rounded-xl shadow-md p-6 max-w-md mx-auto">
+          <button
+            onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <h3 className="text-lg font-semibold text-gray-800">
+              ⚙️ Advanced Settings
+            </h3>
+            <svg
+              className={`w-5 h-5 text-gray-600 transition-transform ${showAdvancedSettings ? 'rotate-180' : ''
+                }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {showAdvancedSettings && (
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Emotion Threshold
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={settings.emotionThreshold}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      emotionThreshold: parseFloat(e.target.value),
+                    })
+                  }
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>0% (Include all)</span>
+                  <span className="font-medium">
+                    {(settings.emotionThreshold * 100).toFixed(0)}%
+                  </span>
+                  <span>100% (Only strongest)</span>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">
+                  Only include emotions above this confidence level
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Max Emotions to Show
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
+                  value={settings.maxEmotions}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      maxEmotions: parseInt(e.target.value),
+                    })
+                  }
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>1</span>
+                  <span className="font-medium">{settings.maxEmotions}</span>
+                  <span>10</span>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">
+                  Maximum number of emotions to display in results
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
     </div>
   );
 }

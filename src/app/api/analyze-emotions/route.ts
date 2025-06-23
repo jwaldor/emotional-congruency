@@ -10,6 +10,9 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const audioFile = formData.get("audio") as File;
+    const emotionThreshold =
+      parseFloat(formData.get("emotionThreshold") as string) || 0.0;
+    const maxEmotions = parseInt(formData.get("maxEmotions") as string) || 3;
 
     if (!audioFile) {
       return NextResponse.json(
@@ -156,7 +159,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Convert to array and sort by score
+      // Convert to array and sort by score (for all emotions)
       for (const [name, score] of allEmotions.entries()) {
         emotions.push({ name, score });
       }
@@ -164,8 +167,17 @@ export async function POST(request: NextRequest) {
       emotions.sort((a, b) => b.score - a.score);
     }
 
+    // Get top 10 emotions for display
+    const top10Emotions = emotions.slice(0, 10);
+
+    // Get analyzed emotions based on user settings (threshold + max count)
+    const analyzedEmotions = emotions
+      .filter((emotion) => emotion.score >= emotionThreshold)
+      .slice(0, maxEmotions);
+
     return NextResponse.json({
-      emotions: emotions.slice(0, 10), // Return top 10 emotions for display
+      emotions: top10Emotions, // Always return top 10 for display
+      analyzedEmotions: analyzedEmotions, // Return the subset that was analyzed
       transcript: transcript.trim(), // Return the transcript from Hume
     });
   } catch (error) {

@@ -1,11 +1,12 @@
 import SavedResultsPage from '@/components/SavedResultsPage';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function ResultPage({ params }: PageProps) {
-  return <SavedResultsPage resultId={params.id} />;
+export default async function ResultPage({ params }: PageProps) {
+  const { id } = await params;
+  return <SavedResultsPage resultId={id} />;
 }

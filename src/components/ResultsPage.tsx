@@ -3,29 +3,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useChat } from 'ai/react';
 import toast from 'react-hot-toast';
-
-interface EmotionScore {
-  name: string;
-  score: number;
-}
+import { AnalysisSettings, AnalysisData } from '@/types/analysis';
+import FeedbackModal from './FeedbackModal';
 
 interface ResultsPageProps {
   audioBlob: Blob;
+  settings: AnalysisSettings;
 }
 
-interface AnalysisData {
-  transcript: string;
-  emotions: EmotionScore[];
-  insights: string;
-}
-
-export default function ResultsPage({ audioBlob }: ResultsPageProps) {
+export default function ResultsPage({ audioBlob, settings }: ResultsPageProps) {
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [savedResultId, setSavedResultId] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   // Initialize chat with pre-filled message
   const { messages, input, handleInputChange, handleSubmit, isLoading: isChatLoading } = useChat({
@@ -40,6 +33,8 @@ export default function ResultsPage({ audioBlob }: ResultsPageProps) {
 
       const emotionFormData = new FormData();
       emotionFormData.append('audio', audioBlob, 'recording.webm');
+      emotionFormData.append('emotionThreshold', settings.emotionThreshold.toString());
+      emotionFormData.append('maxEmotions', settings.maxEmotions.toString());
 
       const emotionResponse = await fetch('/api/analyze-emotions', {
         method: 'POST',
@@ -50,11 +45,11 @@ export default function ResultsPage({ audioBlob }: ResultsPageProps) {
         throw new Error('Failed to analyze emotions');
       }
 
-      const { emotions, transcript } = await emotionResponse.json();
+      const { emotions, analyzedEmotions, transcript } = await emotionResponse.json();
       toast.success('Analysis and transcription complete!', { id: 'analyze' });
 
       // Update state with partial data
-      setAnalysisData({ transcript, emotions, insights: '' });
+      setAnalysisData({ transcript, emotions, analyzedEmotions, insights: '' });
       setIsAnalyzing(false);
       setIsGeneratingInsights(true);
 
@@ -68,7 +63,7 @@ export default function ResultsPage({ audioBlob }: ResultsPageProps) {
         },
         body: JSON.stringify({
           transcript,
-          topEmotions: emotions.slice(0, 3),
+          topEmotions: analyzedEmotions,
         }),
       });
 
@@ -80,7 +75,7 @@ export default function ResultsPage({ audioBlob }: ResultsPageProps) {
       toast.success('Analysis complete!', { id: 'insights' });
 
       // Update with complete data
-      setAnalysisData({ transcript, emotions, insights });
+      setAnalysisData({ transcript, emotions, analyzedEmotions, insights });
       setIsGeneratingInsights(false);
 
       // Step 3: Save results to database
@@ -119,7 +114,7 @@ export default function ResultsPage({ audioBlob }: ResultsPageProps) {
       setIsAnalyzing(false);
       setIsGeneratingInsights(false);
     }
-  }, [audioBlob]);
+  }, [audioBlob, settings.emotionThreshold, settings.maxEmotions]);
 
   useEffect(() => {
     analyzeAudio();
@@ -128,7 +123,7 @@ export default function ResultsPage({ audioBlob }: ResultsPageProps) {
   const copyResultLink = async () => {
     if (!savedResultId) return;
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    const baseUrl = window.location.origin;
     const resultUrl = `${baseUrl}/results/${savedResultId}`;
 
     try {
@@ -192,7 +187,7 @@ I'd like to understand more about what these emotions might reveal about my comm
         <h3 className="text-xl font-semibold text-gray-800 mb-4">
           Detected Emotions
           <span className="text-sm font-normal text-gray-500 ml-2">
-            (Top 3 analyzed by AI)
+            (Top {analysisData?.analyzedEmotions?.length || 0} analyzed by AI)
           </span>
         </h3>
         <div className="space-y-3">
@@ -203,26 +198,28 @@ I'd like to understand more about what these emotions might reveal about my comm
             </div>
           ) : (
             displayEmotions.map((emotion, index) => {
-              const isTopThree = index < 3;
+              const isAnalyzed = analysisData?.analyzedEmotions?.some(
+                (analyzedEmotion) => analyzedEmotion.name === emotion.name
+              ) || false;
               return (
                 <div key={emotion.name} className="flex items-center space-x-4">
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isTopThree
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isAnalyzed
                     ? 'bg-blue-100 border-2 border-blue-300'
                     : 'bg-gray-100'
                     }`}>
-                    <span className={`font-semibold text-sm ${isTopThree ? 'text-blue-600' : 'text-gray-500'
+                    <span className={`font-semibold text-sm ${isAnalyzed ? 'text-blue-600' : 'text-gray-500'
                       }`}>
                       {index + 1}
                     </span>
                   </div>
                   <div className="flex-grow">
                     <div className="flex justify-between items-center mb-1">
-                      <span className={`capitalize ${isTopThree
+                      <span className={`capitalize ${isAnalyzed
                         ? 'font-medium text-gray-800'
                         : 'font-normal text-gray-600'
                         }`}>
                         {emotion.name}
-                        {isTopThree && (
+                        {isAnalyzed && (
                           <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
                             AI Analyzed
                           </span>
@@ -234,7 +231,7 @@ I'd like to understand more about what these emotions might reveal about my comm
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full transition-all duration-500 ${isTopThree
+                        className={`h-2 rounded-full transition-all duration-500 ${isAnalyzed
                           ? 'bg-gradient-to-r from-blue-400 to-blue-600'
                           : 'bg-gradient-to-r from-gray-300 to-gray-400'
                           }`}
@@ -275,18 +272,26 @@ I'd like to understand more about what these emotions might reveal about my comm
           )}
         </div>
 
-        {/* Copy Link Button - Only show after insights are generated */}
+        {/* Action Buttons - Only show after insights are generated */}
         {savedResultId && analysisData?.insights && (
-          <div className="mt-6 flex flex-col items-center space-y-2">
-            <button
-              onClick={copyResultLink}
-              className={`px-6 py-3 rounded-lg transition-colors font-medium cursor-pointer ${linkCopied
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-600 text-white hover:bg-gray-700'
-                }`}
-            >
-              {linkCopied ? 'Link Copied!' : 'Copy Link'}
-            </button>
+          <div className="mt-6 flex flex-col items-center space-y-4">
+            <div className="flex space-x-3">
+              <button
+                onClick={copyResultLink}
+                className={`px-6 py-3 rounded-lg transition-colors font-medium cursor-pointer ${linkCopied
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-600 text-white hover:bg-gray-700'
+                  }`}
+              >
+                {linkCopied ? 'Link Copied!' : 'Copy Link'}
+              </button>
+              <button
+                onClick={() => setShowFeedbackModal(true)}
+                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium cursor-pointer"
+              >
+                💬 Feedback
+              </button>
+            </div>
             <p className="text-sm text-gray-500 text-center">
               Anyone with the link can access this analysis
             </p>
@@ -383,6 +388,13 @@ I'd like to understand more about what these emotions might reveal about my comm
           </div>
         </div>
       )}
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        resultId={savedResultId || undefined}
+      />
     </div>
   );
 }

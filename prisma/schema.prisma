@@ -20,3 +20,14 @@ model Result {
 
   @@map("results")
 }
+
+model Feedback {
+  id        String   @id @default(uuid())
+  resultId  String? // Optional reference to the result being reviewed
+  email     String? // Optional email for follow-up
+  feedback  String // The feedback text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("feedback")
+}

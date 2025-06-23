@@ -3,12 +3,15 @@
 import { useState } from 'react';
 import VoiceRecorder from '@/components/VoiceRecorder';
 import ResultsPage from '@/components/ResultsPage';
+import { AnalysisSettings } from '@/types/analysis';
 
 export default function Home() {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [analysisSettings, setAnalysisSettings] = useState<AnalysisSettings | null>(null);
 
-  const handleRecordingComplete = (blob: Blob) => {
+  const handleRecordingComplete = (blob: Blob, settings: AnalysisSettings) => {
     setAudioBlob(blob);
+    setAnalysisSettings(settings);
   };
 
   return (
@@ -20,7 +23,7 @@ export default function Home() {
             isProcessing={false}
           />
         ) : (
-          <ResultsPage audioBlob={audioBlob} />
+          <ResultsPage audioBlob={audioBlob} settings={analysisSettings!} />
         )}
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useChat } from 'ai/react';
 import toast from 'react-hot-toast';
 
@@ -27,17 +27,13 @@ export default function SavedResultsPage({ resultId }: SavedResultsPageProps) {
     initialInput: '', // Will be set after result loads
   });
 
-  useEffect(() => {
-    fetchResult();
-  }, [resultId]);
-
-  const fetchResult = async () => {
+  const fetchResult = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
       const response = await fetch(`/api/results/${resultId}`);
-      
+
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error('Result not found');
@@ -54,11 +50,15 @@ export default function SavedResultsPage({ resultId }: SavedResultsPageProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [resultId]);
+
+  useEffect(() => {
+    fetchResult();
+  }, [fetchResult]);
 
   const generateChatPrompt = () => {
     if (!result) return '';
-    
+
     return `Based on my previous voice analysis, here are my results:
 
 **Transcript:**
@@ -160,22 +160,20 @@ I'd like to discuss this analysis further. What insights can you provide?`;
             <h3 className="text-xl font-semibold text-gray-800 mb-4">
               Continue the Conversation
             </h3>
-            
+
             {/* Chat Messages */}
             <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'
+                    }`}
                 >
                   <div
-                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      message.role === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
+                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${message.role === 'user'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-800'
+                      }`}
                   >
                     <p className="text-sm">{message.content}</p>
                   </div>
