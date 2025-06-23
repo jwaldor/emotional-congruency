@@ -23,6 +23,9 @@ export default function ResultsPage({ audioBlob }: ResultsPageProps) {
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedResultId, setSavedResultId] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Initialize chat with pre-filled message
   const { messages, input, handleInputChange, handleSubmit, isLoading: isChatLoading } = useChat({
@@ -80,6 +83,36 @@ export default function ResultsPage({ audioBlob }: ResultsPageProps) {
       setAnalysisData({ transcript, emotions, insights });
       setIsGeneratingInsights(false);
 
+      // Step 3: Save results to database
+      setIsSaving(true);
+      toast.loading('Saving results...', { id: 'save' });
+
+      try {
+        const saveResponse = await fetch('/api/results', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputText: transcript,
+            analysisText: insights,
+          }),
+        });
+
+        if (saveResponse.ok) {
+          const { id } = await saveResponse.json();
+          setSavedResultId(id);
+          toast.success('Results saved!', { id: 'save' });
+        } else {
+          throw new Error('Failed to save results');
+        }
+      } catch (saveError) {
+        console.error('Save error:', saveError);
+        toast.error('Failed to save results, but analysis is complete', { id: 'save' });
+      } finally {
+        setIsSaving(false);
+      }
+
     } catch (error) {
       console.error('Analysis error:', error);
       toast.error('Analysis failed. Please try again.');
@@ -91,6 +124,27 @@ export default function ResultsPage({ audioBlob }: ResultsPageProps) {
   useEffect(() => {
     analyzeAudio();
   }, [analyzeAudio]);
+
+  const copyResultLink = async () => {
+    if (!savedResultId) return;
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    const resultUrl = `${baseUrl}/results/${savedResultId}`;
+
+    try {
+      await navigator.clipboard.writeText(resultUrl);
+      setLinkCopied(true);
+      toast.success('Link copied to clipboard!');
+
+      // Reset the copied state after 3 seconds
+      setTimeout(() => {
+        setLinkCopied(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+      toast.error('Failed to copy link');
+    }
+  };
 
   const generateChatPrompt = () => {
     if (!analysisData) return '';
@@ -220,6 +274,24 @@ I'd like to understand more about what these emotions might reveal about my comm
             <p className="text-gray-600">Insights will appear here once analysis is complete.</p>
           )}
         </div>
+
+        {/* Copy Link Button - Only show after insights are generated */}
+        {savedResultId && analysisData?.insights && (
+          <div className="mt-6 flex flex-col items-center space-y-2">
+            <button
+              onClick={copyResultLink}
+              className={`px-6 py-3 rounded-lg transition-colors font-medium cursor-pointer ${linkCopied
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-600 text-white hover:bg-gray-700'
+                }`}
+            >
+              {linkCopied ? 'Link Copied!' : 'Copy Link'}
+            </button>
+            <p className="text-sm text-gray-500 text-center">
+              Anyone with the link can access this analysis
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Chat Section - Only show after insights are generated */}
@@ -291,14 +363,26 @@ I'd like to understand more about what these emotions might reveal about my comm
       )}
 
       {/* Action Buttons */}
-      <div className="flex justify-center space-x-4">
-        <button
-          onClick={() => window.location.reload()}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-        >
-          Analyze Another Recording
-        </button>
+      <div className="flex flex-col items-center space-y-4">
+        <div className="flex justify-center space-x-4">
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            Analyze Another Recording
+          </button>
+        </div>
       </div>
+
+      {/* Save Status */}
+      {isSaving && (
+        <div className="text-center">
+          <div className="flex items-center justify-center space-x-3">
+            <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+            <span className="text-gray-600">Saving your analysis...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
