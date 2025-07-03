@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { AudioRecorder, formatDuration } from '@/lib/audio-utils';
-import { AnalysisSettings } from '@/types/analysis';
+import { AnalysisSettings, AnalysisType } from '@/types/analysis';
+import { getAvailableAnalysisTypes } from '@/lib/analysis-configs';
 import toast from 'react-hot-toast';
 
 interface VoiceRecorderProps {
@@ -18,6 +19,7 @@ export default function VoiceRecorder({ onRecordingComplete, isProcessing }: Voi
   const [settings, setSettings] = useState<AnalysisSettings>({
     emotionThreshold: 0.0,
     maxEmotions: 3,
+    analysisType: 'original',
   });
 
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
@@ -222,6 +224,31 @@ export default function VoiceRecorder({ onRecordingComplete, isProcessing }: Voi
 
           {showAdvancedSettings && (
             <div className="mt-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Analysis Type
+                </label>
+                <select
+                  value={settings.analysisType}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      analysisType: e.target.value as AnalysisType,
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {getAvailableAnalysisTypes().map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-600 mt-1">
+                  {getAvailableAnalysisTypes().find(t => t.value === settings.analysisType)?.description}
+                </p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Emotion Threshold

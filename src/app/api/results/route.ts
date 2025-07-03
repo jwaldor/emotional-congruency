@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { EmotionScore, AnalysisType } from "@/types/analysis";
 
 interface SaveResultRequest {
   inputText: string;
   analysisText: string;
+  analyzedEmotions?: EmotionScore[];
+  analysisType?: AnalysisType;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { inputText, analysisText }: SaveResultRequest = await request.json();
+    const {
+      inputText,
+      analysisText,
+      analyzedEmotions,
+      analysisType = "original",
+    }: SaveResultRequest = await request.json();
 
     if (!inputText || !analysisText) {
       return NextResponse.json(
@@ -22,6 +30,10 @@ export async function POST(request: NextRequest) {
       data: {
         inputText,
         analysisText,
+        analyzedEmotions: analyzedEmotions
+          ? JSON.stringify(analyzedEmotions)
+          : null,
+        analysisType,
       },
     });
 

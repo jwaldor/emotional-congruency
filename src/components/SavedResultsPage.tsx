@@ -3,11 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useChat } from 'ai/react';
 import toast from 'react-hot-toast';
+import { EmotionScore, AnalysisType } from '@/types/analysis';
 
 interface SavedResult {
   id: string;
   inputText: string;
   analysisText: string;
+  analyzedEmotions?: EmotionScore[];
+  analysisType?: AnalysisType;
   createdAt: string;
   updatedAt: string;
 }
@@ -59,15 +62,36 @@ export default function SavedResultsPage({ resultId }: SavedResultsPageProps) {
   const generateChatPrompt = () => {
     if (!result) return '';
 
-    return `Based on my previous voice analysis, here are my results:
+    let prompt = `Based on my previous voice analysis, here are my results:
 
 **Transcript:**
-"${result.inputText}"
+"${result.inputText}"`;
+
+    // Add analyzed emotions if available
+    if (result.analyzedEmotions && result.analyzedEmotions.length > 0) {
+      prompt += `
+
+**Analyzed Emotions:**
+${result.analyzedEmotions
+          .map((emotion, index) => `${index + 1}. ${emotion.name} (${(emotion.score * 100).toFixed(1)}%)`)
+          .join('\n')}`;
+    }
+
+    // Add analysis type if available
+    if (result.analysisType && result.analysisType !== 'original') {
+      prompt += `
+
+**Analysis Type:** ${result.analysisType}`;
+    }
+
+    prompt += `
 
 **AI Analysis:**
 ${result.analysisText}
 
 I'd like to discuss this analysis further. What insights can you provide?`;
+
+    return prompt;
   };
 
   if (isLoading) {
@@ -136,6 +160,32 @@ I'd like to discuss this analysis further. What insights can you provide?`;
               </p>
             </div>
           </div>
+
+          {/* Analyzed Emotions Section */}
+          {result.analyzedEmotions && result.analyzedEmotions.length > 0 && (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                Analyzed Emotions
+                {result.analysisType && result.analysisType !== 'original' && (
+                  <span className="text-sm font-normal text-gray-600 ml-2">
+                    ({result.analysisType} analysis)
+                  </span>
+                )}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {result.analyzedEmotions.map((emotion, index) => (
+                  <div key={emotion.name} className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+                    <span className="font-medium text-gray-800">
+                      {index + 1}. {emotion.name}
+                    </span>
+                    <span className="text-blue-600 font-semibold">
+                      {(emotion.score * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* AI Analysis Section */}
           <div className="bg-white rounded-lg shadow-md p-6">

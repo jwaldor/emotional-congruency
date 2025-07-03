@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { HumeClient } from "hume";
-
-interface EmotionScore {
-  name: string;
-  score: number;
-}
+import { AnalysisFactory } from "@/lib/analysis-factory";
+import { getAnalysisConfig } from "@/lib/analysis-configs";
+import { AnalysisType } from "@/types/analysis";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +11,8 @@ export async function POST(request: NextRequest) {
     const emotionThreshold =
       parseFloat(formData.get("emotionThreshold") as string) || 0.0;
     const maxEmotions = parseInt(formData.get("maxEmotions") as string) || 3;
+    const analysisType =
+      (formData.get("analysisType") as AnalysisType) || "original";
 
     if (!audioFile) {
       return NextResponse.json(
@@ -29,6 +29,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get analysis configuration
+    const analysisConfig = getAnalysisConfig(analysisType);
+
     // Initialize Hume client
     const hume = new HumeClient({
       apiKey: humeApiKey,
@@ -40,7 +43,7 @@ export async function POST(request: NextRequest) {
         [audioFile], // Pass the File object directly
         {
           json: {
-            models: {
+            models: analysisConfig.humeConfig || {
               prosody: {},
               burst: {},
             },
@@ -88,97 +91,20 @@ export async function POST(request: NextRequest) {
     const predictions =
       await hume.expressionMeasurement.batch.getJobPredictions(jobId);
 
-    // Extract emotion scores and transcript
-    const emotions: EmotionScore[] = [];
-    let transcript = "";
-
-    if (predictions && predictions.length > 0) {
-      const firstResult = predictions[0];
-
-      // Extract transcript from prosody predictions
-      if (
-        firstResult.results?.predictions &&
-        firstResult.results.predictions.length > 0
-      ) {
-        const prosodyPredictions = firstResult.results.predictions[0];
-        if (prosodyPredictions.models?.prosody?.groupedPredictions) {
-          // Collect all text segments from prosody predictions
-          const textSegments: string[] = [];
-          prosodyPredictions.models.prosody.groupedPredictions.forEach(
-            (group) => {
-              group.predictions.forEach((prediction) => {
-                if (prediction.text) {
-                  textSegments.push(prediction.text);
-                }
-              });
-            }
-          );
-          transcript = textSegments.join(" ");
-        }
-      }
-
-      // Combine prosody and burst emotions
-      const allEmotions = new Map<string, number>();
-
-      // Process prosody emotions
-      if (
-        firstResult.results?.predictions &&
-        firstResult.results.predictions.length > 0
-      ) {
-        const prosodyPredictions = firstResult.results.predictions[0];
-        if (prosodyPredictions.models?.prosody?.groupedPredictions) {
-          // Get all prosody predictions and extract emotions
-          prosodyPredictions.models.prosody.groupedPredictions.forEach(
-            (group) => {
-              group.predictions.forEach((prediction) => {
-                prediction.emotions.forEach((emotion) => {
-                  allEmotions.set(
-                    emotion.name,
-                    Math.max(allEmotions.get(emotion.name) || 0, emotion.score)
-                  );
-                });
-              });
-            }
-          );
-        }
-
-        // Process burst emotions
-        if (prosodyPredictions.models?.burst?.groupedPredictions) {
-          prosodyPredictions.models.burst.groupedPredictions.forEach(
-            (group) => {
-              group.predictions.forEach((prediction) => {
-                prediction.emotions.forEach((emotion) => {
-                  allEmotions.set(
-                    emotion.name,
-                    Math.max(allEmotions.get(emotion.name) || 0, emotion.score)
-                  );
-                });
-              });
-            }
-          );
-        }
-      }
-
-      // Convert to array and sort by score (for all emotions)
-      for (const [name, score] of allEmotions.entries()) {
-        emotions.push({ name, score });
-      }
-
-      emotions.sort((a, b) => b.score - a.score);
-    }
-
-    // Get top 10 emotions for display
-    const top10Emotions = emotions.slice(0, 10);
-
-    // Get analyzed emotions based on user settings (threshold + max count)
-    const analyzedEmotions = emotions
-      .filter((emotion) => emotion.score >= emotionThreshold)
-      .slice(0, maxEmotions);
+    // Process the response using AnalysisFactory
+    const processedResponse = AnalysisFactory.processHumeResponse(
+      { results: predictions },
+      analysisType,
+      emotionThreshold,
+      maxEmotions
+    );
 
     return NextResponse.json({
-      emotions: top10Emotions, // Always return top 10 for display
-      analyzedEmotions: analyzedEmotions, // Return the subset that was analyzed
-      transcript: transcript.trim(), // Return the transcript from Hume
+      emotions: processedResponse.emotions, // Always return top 10 for display
+      analyzedEmotions: processedResponse.analyzedEmotions, // Return the subset that was analyzed
+      sentenceEmotions: processedResponse.sentenceEmotions, // For sentence-level analysis
+      transcript: processedResponse.transcript.trim(), // Return the transcript from Hume
+      analysisType, // Return the analysis type used
     });
   } catch (error) {
     console.error("Emotion analysis error:", error);

@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-
-interface EmotionScore {
-  name: string;
-  score: number;
-}
+import { getInsightGenerationConfig } from "@/lib/analysis-configs";
+import { AnalysisType, EmotionScore, SentenceEmotion } from "@/types/analysis";
 
 interface InsightRequest {
   transcript: string;
   topEmotions: EmotionScore[];
+  analysisType?: AnalysisType;
+  sentenceEmotions?: SentenceEmotion[];
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { transcript, topEmotions }: InsightRequest = await request.json();
+    const {
+      transcript,
+      topEmotions,
+      analysisType = "original",
+      sentenceEmotions,
+    }: InsightRequest = await request.json();
 
     if (!transcript || !topEmotions || topEmotions.length === 0) {
       return NextResponse.json(
@@ -20,6 +24,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Get the appropriate insight generation configuration
+    const insightConfig = getInsightGenerationConfig(analysisType);
 
     const openrouterApiKey = process.env.OPENROUTER_API_KEY;
     if (!openrouterApiKey) {
@@ -32,29 +39,43 @@ export async function POST(request: NextRequest) {
     // Take all emotions (up to 10)
     const allEmotions = topEmotions.slice(0, 10);
 
-    // Create the prompt for Claude
-    const prompt = `You are an expert emotional intelligence coach analyzing the alignment between someone's speech and their detected emotions.
+    // Create the prompt based on analysis type
+    let prompt = insightConfig.systemPrompt;
 
-I've analyzed someone's voice recording and detected these emotions:
-${allEmotions
-  .map(
-    (emotion, index) =>
-      `${index + 1}. ${emotion.name} (${(emotion.score * 100).toFixed(
-        1
-      )}% intensity)`
-  )
-  .join("\n")}
+    // Add transcript and emotions data
+    prompt += `
 
-Here's what they said:
+TRANSCRIPT:
 "${transcript}"
 
-Analyze the alignment between their speech content and their detected emotions. Focus ONLY on the emotions that show clear incongruence - where their words contradict or mask what they're actually feeling.
+DETECTED EMOTIONS (with confidence scores):
+${allEmotions
+  .map((emotion) => `${emotion.name}: ${(emotion.score * 100).toFixed(1)}%`)
+  .join("\n")}`;
 
-For each incongruent emotion you identify, explain:
-1. **The Incongruence**: How do their words contradict this emotion? What are they saying vs. what they're feeling?
-2. **The Blindspot**: What self-awareness opportunity does this reveal?
+    // Add sentence-level data if available
+    if (
+      insightConfig.useSentenceLevel &&
+      sentenceEmotions &&
+      sentenceEmotions.length > 0
+    ) {
+      prompt += `
 
-Only discuss emotions where there's a clear mismatch. If their speech aligns well with certain emotions, skip those entirely. Be concise and direct in your analysis.`;
+SENTENCE-BY-SENTENCE EMOTIONAL ANALYSIS:
+${sentenceEmotions
+  .map((sentenceEmotion, index) => {
+    const topSentenceEmotions = sentenceEmotion.emotions.slice(0, 3);
+    return `${index + 1}. "${sentenceEmotion.sentence}"
+   Top emotions: ${topSentenceEmotions
+     .map((e) => `${e.name} (${(e.score * 100).toFixed(1)}%)`)
+     .join(", ")}`;
+  })
+  .join("\n\n")}`;
+    }
+
+    prompt += `
+
+Please provide thoughtful, personalized insights based on this emotional analysis:`;
 
     // Call Claude via OpenRouter
     const response = await fetch(

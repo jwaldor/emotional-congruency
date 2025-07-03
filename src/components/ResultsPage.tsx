@@ -35,6 +35,7 @@ export default function ResultsPage({ audioBlob, settings }: ResultsPageProps) {
       emotionFormData.append('audio', audioBlob, 'recording.webm');
       emotionFormData.append('emotionThreshold', settings.emotionThreshold.toString());
       emotionFormData.append('maxEmotions', settings.maxEmotions.toString());
+      emotionFormData.append('analysisType', settings.analysisType);
 
       const emotionResponse = await fetch('/api/analyze-emotions', {
         method: 'POST',
@@ -45,11 +46,18 @@ export default function ResultsPage({ audioBlob, settings }: ResultsPageProps) {
         throw new Error('Failed to analyze emotions');
       }
 
-      const { emotions, analyzedEmotions, transcript } = await emotionResponse.json();
+      const { emotions, analyzedEmotions, sentenceEmotions, transcript, analysisType } = await emotionResponse.json();
       toast.success('Analysis and transcription complete!', { id: 'analyze' });
 
       // Update state with partial data
-      setAnalysisData({ transcript, emotions, analyzedEmotions, insights: '' });
+      setAnalysisData({
+        transcript,
+        emotions,
+        analyzedEmotions,
+        sentenceEmotions,
+        insights: '',
+        analysisType: analysisType || settings.analysisType
+      });
       setIsAnalyzing(false);
       setIsGeneratingInsights(true);
 
@@ -64,6 +72,8 @@ export default function ResultsPage({ audioBlob, settings }: ResultsPageProps) {
         body: JSON.stringify({
           transcript,
           topEmotions: analyzedEmotions,
+          analysisType: settings.analysisType,
+          sentenceEmotions,
         }),
       });
 
@@ -75,7 +85,14 @@ export default function ResultsPage({ audioBlob, settings }: ResultsPageProps) {
       toast.success('Analysis complete!', { id: 'insights' });
 
       // Update with complete data
-      setAnalysisData({ transcript, emotions, analyzedEmotions, insights });
+      setAnalysisData({
+        transcript,
+        emotions,
+        analyzedEmotions,
+        sentenceEmotions,
+        insights,
+        analysisType: analysisType || settings.analysisType
+      });
       setIsGeneratingInsights(false);
 
       // Step 3: Save results to database
@@ -91,6 +108,8 @@ export default function ResultsPage({ audioBlob, settings }: ResultsPageProps) {
           body: JSON.stringify({
             inputText: transcript,
             analysisText: insights,
+            analyzedEmotions: analyzedEmotions,
+            analysisType: settings.analysisType,
           }),
         });
 
@@ -114,7 +133,7 @@ export default function ResultsPage({ audioBlob, settings }: ResultsPageProps) {
       setIsAnalyzing(false);
       setIsGeneratingInsights(false);
     }
-  }, [audioBlob, settings.emotionThreshold, settings.maxEmotions]);
+  }, [audioBlob, settings.emotionThreshold, settings.maxEmotions, settings.analysisType]);
 
   useEffect(() => {
     analyzeAudio();

@@ -26,10 +26,22 @@ export async function GET(
       return NextResponse.json({ error: "Result not found" }, { status: 404 });
     }
 
+    // Parse analyzed emotions if they exist
+    let analyzedEmotions = null;
+    if (result.analyzedEmotions) {
+      try {
+        analyzedEmotions = JSON.parse(result.analyzedEmotions);
+      } catch (error) {
+        console.error("Error parsing analyzed emotions:", error);
+      }
+    }
+
     return NextResponse.json({
       id: result.id,
       inputText: result.inputText,
       analysisText: result.analysisText,
+      analyzedEmotions,
+      analysisType: result.analysisType,
       createdAt: result.createdAt,
       updatedAt: result.updatedAt,
     });

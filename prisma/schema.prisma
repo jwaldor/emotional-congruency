@@ -12,11 +12,13 @@ datasource db {
 }
 
 model Result {
-  id           String   @id @default(uuid())
-  inputText    String // The transcript from the voice recording
-  analysisText String // The AI-generated insights
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(uuid())
+  inputText        String // The transcript from the voice recording
+  analysisText     String // The AI-generated insights
+  analyzedEmotions String? // JSON string of the emotions that were analyzed
+  analysisType     String   @default("original") // Type of analysis performed
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@map("results")
 }
