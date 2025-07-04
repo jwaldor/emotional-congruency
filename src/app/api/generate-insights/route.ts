@@ -42,16 +42,21 @@ export async function POST(request: NextRequest) {
     // Create the prompt based on analysis type
     let prompt = insightConfig.systemPrompt;
 
-    // Add transcript and emotions data
+    // Add emotions and transcript data in the original format
     prompt += `
 
-TRANSCRIPT:
-"${transcript}"
-
-DETECTED EMOTIONS (with confidence scores):
+I've analyzed someone's voice recording and detected these emotions:
 ${allEmotions
-  .map((emotion) => `${emotion.name}: ${(emotion.score * 100).toFixed(1)}%`)
-  .join("\n")}`;
+  .map(
+    (emotion, index) =>
+      `${index + 1}. ${emotion.name} (${(emotion.score * 100).toFixed(
+        1
+      )}% intensity)`
+  )
+  .join("\n")}
+
+Here's what they said:
+"${transcript}"`;
 
     // Add sentence-level data if available
     if (
@@ -72,10 +77,6 @@ ${sentenceEmotions
   })
   .join("\n\n")}`;
     }
-
-    prompt += `
-
-Please provide thoughtful, personalized insights based on this emotional analysis:`;
 
     // Call Claude via OpenRouter
     const response = await fetch(
