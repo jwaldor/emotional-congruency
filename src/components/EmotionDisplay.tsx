@@ -32,15 +32,15 @@ export default function EmotionDisplay({ analysisData, className = '' }: Emotion
             These are the aggregated emotions across all sentences:
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {emotions.slice(0, 6).map((emotion, index) => {
+            {emotions.slice(0, 6).map((emotion) => {
               const isAnalyzed = analyzedEmotions.some(ae => ae.name === emotion.name);
 
               return (
                 <div
                   key={emotion.name}
                   className={`p-3 rounded-lg border transition-all duration-200 ${isAnalyzed
-                      ? 'bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200'
-                      : 'bg-gray-50 border-gray-200'
+                    ? 'bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200'
+                    : 'bg-gray-50 border-gray-200'
                     }`}
                 >
                   <div className="flex items-center justify-between">
@@ -56,8 +56,8 @@ export default function EmotionDisplay({ analysisData, className = '' }: Emotion
                   <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
                     <div
                       className={`h-1.5 rounded-full transition-all duration-500 ${isAnalyzed
-                          ? 'bg-gradient-to-r from-blue-400 to-blue-600'
-                          : 'bg-gradient-to-r from-gray-300 to-gray-400'
+                        ? 'bg-gradient-to-r from-blue-400 to-blue-600'
+                        : 'bg-gradient-to-r from-gray-300 to-gray-400'
                         }`}
                       style={{ width: `${emotion.score * 100}%` }}
                     ></div>

@@ -4,10 +4,50 @@ import {
   SentenceEmotion,
   AnalysisData,
 } from "@/types/analysis";
-import {
-  getAnalysisConfig,
-  getInsightGenerationConfig,
-} from "./analysis-configs";
+import { getInsightGenerationConfig } from "./analysis-configs";
+
+// Types for Hume API response structure
+interface HumeEmotion {
+  name: string;
+  score: number;
+}
+
+interface HumePrediction {
+  text?: string;
+  emotions: HumeEmotion[];
+  time?: {
+    begin: number;
+    end: number;
+  };
+}
+
+interface HumeGroupedPrediction {
+  predictions: HumePrediction[];
+}
+
+interface HumeModelPredictions {
+  prosody?: {
+    groupedPredictions: HumeGroupedPrediction[];
+  };
+  burst?: {
+    groupedPredictions: HumeGroupedPrediction[];
+  };
+}
+
+interface HumeResultPrediction {
+  models?: HumeModelPredictions;
+}
+
+interface HumeResult {
+  results?: {
+    predictions: HumeResultPrediction[];
+  };
+}
+
+interface HumeResponse {
+  results: HumeResult[];
+  transcript?: string;
+}
 
 // Factory class for creating different types of analysis
 export class AnalysisFactory {
@@ -15,7 +55,7 @@ export class AnalysisFactory {
    * Process Hume API response based on analysis type
    */
   static processHumeResponse(
-    humeResponse: any,
+    humeResponse: HumeResponse,
     analysisType: AnalysisType,
     emotionThreshold: number,
     maxEmotions: number
@@ -25,12 +65,8 @@ export class AnalysisFactory {
     sentenceEmotions?: SentenceEmotion[];
     transcript: string;
   } {
-    console.log("Processing Hume response for analysis type:", analysisType);
-    const config = getAnalysisConfig(analysisType);
-
     // Extract transcript
     const transcript = this.extractTranscript(humeResponse);
-    console.log("Extracted transcript:", transcript);
 
     // Process emotions based on analysis type
     if (analysisType === "sentence-level") {
@@ -53,7 +89,7 @@ export class AnalysisFactory {
   /**
    * Extract transcript from Hume response
    */
-  private static extractTranscript(humeResponse: any): string {
+  private static extractTranscript(humeResponse: HumeResponse): string {
     // Handle the current SDK response structure
     if (humeResponse.results && humeResponse.results.length > 0) {
       const firstResult = humeResponse.results[0];
@@ -67,8 +103,8 @@ export class AnalysisFactory {
           // Collect all text segments from prosody predictions
           const textSegments: string[] = [];
           prosodyPredictions.models.prosody.groupedPredictions.forEach(
-            (group: any) => {
-              group.predictions.forEach((prediction: any) => {
+            (group) => {
+              group.predictions.forEach((prediction) => {
                 if (prediction.text) {
                   textSegments.push(prediction.text);
                 }
@@ -88,7 +124,7 @@ export class AnalysisFactory {
    * Process standard (utterance-level) emotion response
    */
   private static processStandardResponse(
-    humeResponse: any,
+    humeResponse: HumeResponse,
     emotionThreshold: number,
     maxEmotions: number,
     transcript: string
@@ -114,9 +150,9 @@ export class AnalysisFactory {
         if (prosodyPredictions.models?.prosody?.groupedPredictions) {
           // Get all prosody predictions and extract emotions
           prosodyPredictions.models.prosody.groupedPredictions.forEach(
-            (group: any) => {
-              group.predictions.forEach((prediction: any) => {
-                prediction.emotions.forEach((emotion: any) => {
+            (group) => {
+              group.predictions.forEach((prediction) => {
+                prediction.emotions.forEach((emotion) => {
                   allEmotions.set(
                     emotion.name,
                     Math.max(allEmotions.get(emotion.name) || 0, emotion.score)
@@ -130,9 +166,9 @@ export class AnalysisFactory {
         // Process burst emotions
         if (prosodyPredictions.models?.burst?.groupedPredictions) {
           prosodyPredictions.models.burst.groupedPredictions.forEach(
-            (group: any) => {
-              group.predictions.forEach((prediction: any) => {
-                prediction.emotions.forEach((emotion: any) => {
+            (group) => {
+              group.predictions.forEach((prediction) => {
+                prediction.emotions.forEach((emotion) => {
                   allEmotions.set(
                     emotion.name,
                     Math.max(allEmotions.get(emotion.name) || 0, emotion.score)
@@ -171,7 +207,7 @@ export class AnalysisFactory {
    * Process sentence-level emotion response
    */
   private static processSentenceLevelResponse(
-    humeResponse: any,
+    humeResponse: HumeResponse,
     emotionThreshold: number,
     maxEmotions: number,
     transcript: string
@@ -187,9 +223,9 @@ export class AnalysisFactory {
 
     // Process sentence-level emotions
     const sentenceEmotions: SentenceEmotion[] = prosodyPredictions.map(
-      (prediction: any) => {
+      (prediction) => {
         const emotions: EmotionScore[] = prediction.emotions
-          .map((emotion: any) => ({
+          .map((emotion) => ({
             name: emotion.name,
             score: emotion.score,
           }))
