@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDbForRequest } from "@/lib/db";
 
 export async function GET(
   request: NextRequest,
@@ -15,22 +15,25 @@ export async function GET(
       );
     }
 
-    // Get the result from the database
-    const result = await prisma.result.findUnique({
-      where: {
-        id: id,
-      },
-    });
+    // Get the authenticated Supabase client
+    const db = await getDbForRequest(request);
 
-    if (!result) {
+    // Get the analysis from the database
+    const { data: result, error } = await db
+      .from("analyses")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error || !result) {
       return NextResponse.json({ error: "Result not found" }, { status: 404 });
     }
 
     // Parse analyzed emotions if they exist
     let analyzedEmotions = null;
-    if (result.analyzedEmotions) {
+    if (result.analyzed_emotions) {
       try {
-        analyzedEmotions = JSON.parse(result.analyzedEmotions);
+        analyzedEmotions = JSON.parse(result.analyzed_emotions);
       } catch (error) {
         console.error("Error parsing analyzed emotions:", error);
       }
@@ -38,12 +41,12 @@ export async function GET(
 
     return NextResponse.json({
       id: result.id,
-      inputText: result.inputText,
-      analysisText: result.analysisText,
+      inputText: result.input_text,
+      analysisText: result.analysis_text,
       analyzedEmotions,
-      analysisType: result.analysisType,
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt,
+      analysisType: result.analysis_type,
+      createdAt: result.created_at,
+      updatedAt: result.updated_at,
     });
   } catch (error) {
     console.error("Error fetching result:", error);

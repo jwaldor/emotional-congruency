@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDbForRequest } from "@/lib/db";
 
 interface FeedbackRequest {
   resultId?: string;
@@ -18,14 +18,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get the authenticated Supabase client
+    const db = await getDbForRequest(request);
+
     // Save the feedback to the database
-    const feedbackRecord = await prisma.feedback.create({
-      data: {
-        resultId: resultId || null,
+    const { data: feedbackRecord, error } = await db
+      .from("feedback")
+      .insert({
+        analysis_id: resultId || null,
         email: email || null,
-        feedback: feedback.trim(),
-      },
-    });
+        feedback_text: feedback.trim(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Database error:", error);
+      return NextResponse.json(
+        { error: "Failed to save feedback" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       id: feedbackRecord.id,
