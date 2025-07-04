@@ -11,6 +11,7 @@ export interface SentenceEmotion {
 }
 
 export type AnalysisType = "original" | "sentence-level" | "actions";
+export type DisplayType = "standard" | "sentence-level";
 
 export interface AnalysisSettings {
   emotionThreshold: number; // Minimum score (0-1) to include an emotion
@@ -25,6 +26,7 @@ export interface AnalysisData {
   sentenceEmotions?: SentenceEmotion[]; // For sentence-level analysis
   insights: string;
   analysisType: AnalysisType;
+  displayType?: DisplayType; // How to display the emotions
 }
 
 export interface FeedbackData {

@@ -105,6 +105,10 @@ export async function POST(request: NextRequest) {
       sentenceEmotions: processedResponse.sentenceEmotions, // For sentence-level analysis
       transcript: processedResponse.transcript.trim(), // Return the transcript from Hume
       analysisType, // Return the analysis type used
+      displayType:
+        analysisType === "sentence-level" && processedResponse.sentenceEmotions
+          ? "sentence-level"
+          : "standard", // How to display emotions
     });
   } catch (error) {
     console.error("Emotion analysis error:", error);

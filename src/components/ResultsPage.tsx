@@ -5,6 +5,7 @@ import { useChat } from 'ai/react';
 import toast from 'react-hot-toast';
 import { AnalysisSettings, AnalysisData } from '@/types/analysis';
 import FeedbackModal from './FeedbackModal';
+import EmotionDisplay from './EmotionDisplay';
 
 interface ResultsPageProps {
   audioBlob: Blob;
@@ -46,7 +47,7 @@ export default function ResultsPage({ audioBlob, settings }: ResultsPageProps) {
         throw new Error('Failed to analyze emotions');
       }
 
-      const { emotions, analyzedEmotions, sentenceEmotions, transcript, analysisType } = await emotionResponse.json();
+      const { emotions, analyzedEmotions, sentenceEmotions, transcript, analysisType, displayType } = await emotionResponse.json();
       toast.success('Analysis and transcription complete!', { id: 'analyze' });
 
       // Update state with partial data
@@ -56,7 +57,8 @@ export default function ResultsPage({ audioBlob, settings }: ResultsPageProps) {
         analyzedEmotions,
         sentenceEmotions,
         insights: '',
-        analysisType: analysisType || settings.analysisType
+        analysisType: analysisType || settings.analysisType,
+        displayType: displayType || 'standard'
       });
       setIsAnalyzing(false);
       setIsGeneratingInsights(true);
@@ -91,7 +93,8 @@ export default function ResultsPage({ audioBlob, settings }: ResultsPageProps) {
         analyzedEmotions,
         sentenceEmotions,
         insights,
-        analysisType: analysisType || settings.analysisType
+        analysisType: analysisType || settings.analysisType,
+        displayType: displayType || 'standard'
       });
       setIsGeneratingInsights(false);
 
@@ -178,8 +181,6 @@ ${top10Emotions}
 I'd like to understand more about what these emotions might reveal about my communication style and underlying thoughts. What patterns do you notice?`;
   };
 
-  const displayEmotions = analysisData?.emotions.slice(0, 10) || [];
-
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
       {/* Transcript Section */}
@@ -202,68 +203,19 @@ I'd like to understand more about what these emotions might reveal about my comm
       </div>
 
       {/* Emotions Section */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">
-          Detected Emotions
-          <span className="text-sm font-normal text-gray-500 ml-2">
-            (Top {analysisData?.analyzedEmotions?.length || 0} analyzed by AI)
-          </span>
-        </h3>
-        <div className="space-y-3">
-          {isAnalyzing ? (
-            <div className="flex items-center space-x-3">
-              <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-              <span className="text-gray-600">Analyzing emotional patterns...</span>
-            </div>
-          ) : (
-            displayEmotions.map((emotion, index) => {
-              const isAnalyzed = analysisData?.analyzedEmotions?.some(
-                (analyzedEmotion) => analyzedEmotion.name === emotion.name
-              ) || false;
-              return (
-                <div key={emotion.name} className="flex items-center space-x-4">
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isAnalyzed
-                    ? 'bg-blue-100 border-2 border-blue-300'
-                    : 'bg-gray-100'
-                    }`}>
-                    <span className={`font-semibold text-sm ${isAnalyzed ? 'text-blue-600' : 'text-gray-500'
-                      }`}>
-                      {index + 1}
-                    </span>
-                  </div>
-                  <div className="flex-grow">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className={`capitalize ${isAnalyzed
-                        ? 'font-medium text-gray-800'
-                        : 'font-normal text-gray-600'
-                        }`}>
-                        {emotion.name}
-                        {isAnalyzed && (
-                          <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
-                            AI Analyzed
-                          </span>
-                        )}
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        {(emotion.score * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all duration-500 ${isAnalyzed
-                          ? 'bg-gradient-to-r from-blue-400 to-blue-600'
-                          : 'bg-gradient-to-r from-gray-300 to-gray-400'
-                          }`}
-                        style={{ width: `${emotion.score * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
+      {isAnalyzing ? (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">
+            Detected Emotions
+          </h3>
+          <div className="flex items-center space-x-3">
+            <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+            <span className="text-gray-600">Analyzing emotional patterns...</span>
+          </div>
         </div>
-      </div>
+      ) : analysisData ? (
+        <EmotionDisplay analysisData={analysisData} />
+      ) : null}
 
       {/* AI Insights Section */}
       <div className="bg-white rounded-lg shadow-md p-6">
